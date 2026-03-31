@@ -5,377 +5,256 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>С Днём Рождения!</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
-            margin: 0;
-            overflow-x: hidden;
-            color: #4b5563;
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            overflow: hidden; 
+            background-color: #fdf2f8; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         }
-
-        /* Scroll Snapping */
-        .scroll-container {
-            height: 100vh;
-            overflow-y: auto;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
+        .scroll-container { 
+            height: 100vh; 
+            overflow-y: scroll; 
+            scroll-snap-type: y mandatory; 
+            scroll-behavior: smooth; 
         }
-
-        .section {
-            height: 100vh;
-            width: 100vw;
-            scroll-snap-align: start;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            z-index: 10;
-            padding: 1rem;
-            box-sizing: border-box;
+        .section { 
+            height: 100vh; 
+            width: 100%; 
+            scroll-snap-align: start; 
+            position: relative; 
+            z-index: 10; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
         }
-
-        /* Text Gradient */
-        .text-gradient {
-            background: linear-gradient(to right, #ec4899, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        
+        /* Карусель */
+        .carousel { display: flex; transition: transform 0.5s ease-in-out; height: 100%; }
+        .slide { min-width: 100%; height: 100%; position: relative; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Анимации фона */
+        .floating-emoji { 
+            position: fixed; 
+            pointer-events: none; 
+            z-index: 1; 
+            animation: float 10s infinite linear; 
+            opacity: 0.6; 
         }
-
-        /* Floating Animation */
-        .floating-emoji {
-            position: fixed;
-            z-index: 1;
-            opacity: 0.6;
-            animation: floatUp 15s linear infinite;
-            user-select: none;
-            pointer-events: none;
+        @keyframes float { 
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 
+            10% { opacity: 0.6; } 
+            90% { opacity: 0.6; } 
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; } 
         }
-
-        @keyframes floatUp {
-            0% {
-                transform: translateY(100vh) rotate(0deg) scale(0.8);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.7;
-            }
-            90% {
-                opacity: 0.7;
-            }
-            100% {
-                transform: translateY(-20vh) rotate(360deg) scale(1.2);
-                opacity: 0;
-            }
-        }
-
-        /* Bounce animation for scroll down arrow */
-        @keyframes bounce-soft {
-            0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
-        }
-        .animate-bounce-soft {
-            animation: bounce-soft 2s infinite;
-        }
-
-        /* Glassmorphism Card */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 2px solid #fbcfe8;
-            box-shadow: 0 10px 40px rgba(236, 72, 153, 0.15);
-            border-radius: 1.5rem;
-            width: 100%;
-        }
-
-        /* Hide scrollbar for container */
-        .scroll-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        .scroll-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scroll-container::-webkit-scrollbar-thumb {
-            background: rgba(244, 114, 182, 0.5);
-            border-radius: 10px;
-        }
-
-        /* Side Navigation Dots */
-        .nav-dots {
-            position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 50;
-        }
-        .nav-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: #fbcfe8;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .nav-dot.active {
-            background-color: #ec4899;
-            transform: scale(1.3);
-        }
+        /* Скрываем скроллбар */
+        ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body>
-
-    <!-- Background Emojis Container -->
-    <div id="emoji-container"></div>
-
-    <!-- Navigation Dots -->
-    <div class="nav-dots hidden md:flex">
-        <div class="nav-dot active" onclick="scrollToSection(0)"></div>
-        <div class="nav-dot" onclick="scrollToSection(1)"></div>
-        <div class="nav-dot" onclick="scrollToSection(2)"></div>
+    <!-- Летающие эмодзи на фоне -->
+    <div id="bg-emojis"></div>
+    <!-- Боковая навигация (точки) -->
+    <div class="fixed right-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3" id="side-nav">
+        <div class="w-3 h-3 rounded-full bg-pink-500 cursor-pointer transition-all nav-dot" data-index="0"></div>
+        <div class="w-3 h-3 rounded-full bg-pink-200 cursor-pointer transition-all nav-dot" data-index="1"></div>
+        <div class="w-3 h-3 rounded-full bg-pink-200 cursor-pointer transition-all nav-dot" data-index="2"></div>
     </div>
-
     <div class="scroll-container" id="main-scroll">
         
-        <!-- Section 1: Hero -->
-        <section class="section">
-            <div class="text-center transform transition-transform duration-700 hover:scale-105">
-                <div class="text-6xl md:text-8xl mb-4">👑</div>
-                <h1 class="text-5xl md:text-7xl font-extrabold mb-4 text-gradient drop-shadow-sm leading-tight px-4">С Днём Рождения!</h1>
-                <p class="text-2xl md:text-3xl font-bold text-pink-600 mb-12">Тебе уже 19! 🎉</p>
+        <!-- Экран 1: Главный -->
+        <div class="section">
+            <div class="text-6xl mb-4 text-center animate-bounce">👑</div>
+            <h1 class="text-5xl md:text-6xl font-bold text-pink-500 mb-4 text-center">С Днём Рождения!</h1>
+            <h2 class="text-2xl md:text-3xl text-pink-600 mb-8">Тебе уже 19! 🥳🌸</h2>
+            <p class="text-gray-400 text-sm animate-pulse mt-12">Листай вниз ↓</p>
+        </div>
+        <!-- Экран 2: Карусель с фото -->
+        <div class="section px-4">
+            <div class="bg-white rounded-3xl shadow-xl border border-pink-100 p-4 pb-8 max-w-md w-full relative">
                 
-                <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce-soft text-gray-400 cursor-pointer" onclick="scrollToSection(1)">
-                    <span class="text-xs md:text-sm uppercase tracking-widest mb-2">Листай вниз</span>
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 2: Photo Card -->
-        <section class="section">
-            <div class="glass-card max-w-sm md:max-w-md p-6 flex flex-col items-center transform transition-all duration-500 hover:shadow-2xl hover:-translate-y-1">
-                
-                <!-- Слайдер для 5 фото -->
-                <div class="relative w-full h-80 md:h-[400px] mb-6 rounded-xl overflow-hidden group border border-pink-200 shadow-inner bg-white">
-                    <!-- Обертка слайдов -->
-                    <div id="slider" class="flex w-full h-full transition-transform duration-500 ease-out">
+                <!-- Контейнер слайдера -->
+                <div class="w-full aspect-square rounded-2xl overflow-hidden relative border-2 border-pink-100">
+                    <div class="carousel" id="photo-carousel">
                         
-                        <!-- Слайд 1 -->
-                        <div class="w-full h-full flex-shrink-0 relative bg-pink-50 flex items-center justify-center cursor-pointer slide hover:bg-pink-100/50 transition-colors">
-                            <div class="text-center px-4 z-10 upload-text transform transition-transform group-hover:scale-105">
-                                <svg class="w-10 h-10 mx-auto text-pink-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    
+                        <!-- Фото 1 -->
+                        <div class="slide bg-pink-50 flex items-center justify-center relative">
+                            <!-- Плейсхолдер (показывается пока нет фото) -->
+                            <div class="absolute inset-0 flex items-center justify-center flex-col text-pink-300 z-0">
+                                <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Нужно добавить photo1.jpg</span>
                             </div>
-                            <img src="photo1.jpg" class="absolute inset-0 w-full h-full object-cover z-20 hidden user-photo" alt="Фото 1">
+                            <img src="photo1.jpg" onerror="this.style.opacity='0'" onload="this.style.opacity='1'" class="absolute inset-0 w-full h-full object-cover z-10 opacity-0 transition-opacity duration-300" alt="Фото 1">
                         </div>
-
-                        <!-- Слайд 2 -->
-                        <div class="w-full h-full flex-shrink-0 relative bg-pink-100/50 flex items-center justify-center cursor-pointer slide hover:bg-pink-100 transition-colors">
-                            <div class="text-center px-4 z-10 upload-text transform transition-transform group-hover:scale-105">
-                                <svg class="w-10 h-10 mx-auto text-pink-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <!-- Фото 2 -->
+                        <div class="slide bg-pink-50 flex items-center justify-center relative">
+                            <div class="absolute inset-0 flex items-center justify-center flex-col text-pink-300 z-0">
+                                <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Нужно добавить photo2.jpg</span>
                             </div>
-                            <img src="photo2.jpg" class="absolute inset-0 w-full h-full object-cover z-20 hidden user-photo" alt="Фото 2">
+                            <img src="photo2.jpg" onerror="this.style.opacity='0'" onload="this.style.opacity='1'" class="absolute inset-0 w-full h-full object-cover z-10 opacity-0 transition-opacity duration-300" alt="Фото 2">
                         </div>
-
-                        <!-- Слайд 3 -->
-                        <div class="w-full h-full flex-shrink-0 relative bg-pink-50 flex items-center justify-center cursor-pointer slide hover:bg-pink-100/50 transition-colors">
-                            <div class="text-center px-4 z-10 upload-text transform transition-transform group-hover:scale-105">
-                                <svg class="w-10 h-10 mx-auto text-pink-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                
+                        <!-- Фото 3 -->
+                        <div class="slide bg-pink-50 flex items-center justify-center relative">
+                            <div class="absolute inset-0 flex items-center justify-center flex-col text-pink-300 z-0">
+                                <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Нужно добавить photo3.jpg</span>
                             </div>
-                            <img src="photo3.jpg" class="absolute inset-0 w-full h-full object-cover z-20 hidden user-photo" alt="Фото 3">
+                            <img src="photo3.jpg" onerror="this.style.opacity='0'" onload="this.style.opacity='1'" class="absolute inset-0 w-full h-full object-cover z-10 opacity-0 transition-opacity duration-300" alt="Фото 3">
                         </div>
-
-                        <!-- Слайд 4 -->
-                        <div class="w-full h-full flex-shrink-0 relative bg-pink-100/50 flex items-center justify-center cursor-pointer slide hover:bg-pink-100 transition-colors">
-                            <div class="text-center px-4 z-10 upload-text transform transition-transform group-hover:scale-105">
-                                <svg class="w-10 h-10 mx-auto text-pink-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                
+                        <!-- Фото 4 -->
+                        <div class="slide bg-pink-50 flex items-center justify-center relative">
+                            <div class="absolute inset-0 flex items-center justify-center flex-col text-pink-300 z-0">
+                                <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Нужно добавить photo4.jpg</span>
                             </div>
-                            <img src="photo4.jpg" class="absolute inset-0 w-full h-full object-cover z-20 hidden user-photo" alt="Фото 4">
+                            <img src="photo4.jpg" onerror="this.style.opacity='0'" onload="this.style.opacity='1'" class="absolute inset-0 w-full h-full object-cover z-10 opacity-0 transition-opacity duration-300" alt="Фото 4">
                         </div>
-
-                        <!-- Слайд 5 -->
-                        <div class="w-full h-full flex-shrink-0 relative bg-pink-50 flex items-center justify-center cursor-pointer slide hover:bg-pink-100/50 transition-colors">
-                            <div class="text-center px-4 z-10 upload-text transform transition-transform group-hover:scale-105">
-                                <svg class="w-10 h-10 mx-auto text-pink-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                
+                        <!-- Фото 5 -->
+                        <div class="slide bg-pink-50 flex items-center justify-center relative">
+                            <div class="absolute inset-0 flex items-center justify-center flex-col text-pink-300 z-0">
+                                <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Нужно добавить photo5.jpg</span>
                             </div>
-                            <img src="photo5.jpg" class="absolute inset-0 w-full h-full object-cover z-20 hidden user-photo" alt="Фото 5">
+                            <img src="photo5.jpg" onerror="this.style.opacity='0'" onload="this.style.opacity='1'" class="absolute inset-0 w-full h-full object-cover z-10 opacity-0 transition-opacity duration-300" alt="Фото 5">
                         </div>
                     </div>
-
-                    <!-- Стрелки управления (появляются при наведении или всегда видны) -->
-                    <button onclick="prevSlide(event)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-pink-500 p-1.5 md:p-2 rounded-full shadow-md z-30 transition-all opacity-70 hover:opacity-100">
-                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                    </button>
-                    <button onclick="nextSlide(event)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-pink-500 p-1.5 md:p-2 rounded-full shadow-md z-30 transition-all opacity-70 hover:opacity-100">
-                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
-                    </button>
-
-                    <!-- Точки (Индикаторы) -->
-                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-30">
-                        <div class="w-2 h-2 rounded-full bg-pink-500 transition-colors indicator"></div>
-                        <div class="w-2 h-2 rounded-full bg-pink-200 transition-colors indicator"></div>
-                        <div class="w-2 h-2 rounded-full bg-pink-200 transition-colors indicator"></div>
-                        <div class="w-2 h-2 rounded-full bg-pink-200 transition-colors indicator"></div>
-                        <div class="w-2 h-2 rounded-full bg-pink-200 transition-colors indicator"></div>
+                    
+                    <!-- Стрелки -->
+                    <button id="prevBtn" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-pink-500 w-8 h-8 rounded-full flex items-center justify-center shadow-md z-20">❮</button>
+                    <button id="nextBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-pink-500 w-8 h-8 rounded-full flex items-center justify-center shadow-md z-20">❯</button>
+                    
+                    <!-- Точки слайдера -->
+                    <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-20" id="carousel-dots">
+                        <!-- Добавляются через JS -->
                     </div>
                 </div>
-
-                <h2 class="text-lg md:text-xl font-bold text-pink-600 text-center mb-3 leading-snug px-2">Твоя прекрасная улыбка освещает всё вокруг</h2>
-                <div class="text-xl text-center flex gap-2">💕 🌸 ✨</div>
+                <div class="text-center mt-6">
+                    <h3 class="text-xl font-medium text-pink-600 mb-2">Твоя прекрасная улыбка освещает всё вокруг</h3>
+                    <div class="text-xl">💕 🌸 ✨</div>
+                </div>
             </div>
-        </section>
-
-        <!-- Section 3: Message -->
-        <section class="section pb-20 md:pb-0">
-            <div class="glass-card max-w-sm md:max-w-lg p-6 md:p-10 flex flex-col items-center text-center relative">
-                <div class="text-xl md:text-2xl mb-4 flex gap-1">💕 💖 💗 💓 💞</div>
+        </div>
+        <!-- Экран 3: Поздравление -->
+        <div class="section px-4">
+            <div class="bg-white rounded-3xl shadow-xl border border-pink-100 p-8 max-w-lg w-full text-center relative z-10">
+                <div class="text-2xl mb-4 flex justify-center gap-2">
+                    <span class="animate-bounce" style="animation-delay: 0s;">💕</span>
+                    <span class="animate-bounce" style="animation-delay: 0.1s;">💖</span>
+                    <span class="animate-bounce" style="animation-delay: 0.2s;">💗</span>
+                    <span class="animate-bounce" style="animation-delay: 0.3s;">💓</span>
+                    <span class="animate-bounce" style="animation-delay: 0.4s;">💞</span>
+                </div>
                 
-                <h2 class="text-2xl md:text-4xl font-extrabold text-pink-600 mb-2">С 19-летием, любимая!</h2>
-                <p class="text-base md:text-xl text-gray-600 mb-6 font-medium">Ты — моё солнышко! 🌻</p>
+                <h2 class="text-3xl font-bold text-pink-600 mb-3">С 19-летием, любимая!</h2>
+                <p class="text-gray-600 mb-6">Ты — моё солнышко! 🌻</p>
                 
-                <p class="text-gray-700 leading-relaxed mb-8 text-sm md:text-base">
+                <p class="text-gray-700 text-sm leading-relaxed mb-8 px-4">
                     В этот особенный день я хочу сказать тебе самые тёплые слова. Ты делаешь этот мир красивее просто тем, что ты есть. Пусть твои 19 лет будут наполнены счастьем, любовью и невероятными приключениями!
                 </p>
-
-                <!-- Tags -->
-                <div class="flex flex-wrap justify-center gap-2 mb-8">
-                    <span class="px-3 md:px-4 py-1.5 md:py-2 bg-pink-100 text-pink-700 rounded-full text-xs md:text-sm font-semibold shadow-sm flex items-center gap-1">🌸 Красивая</span>
-                    <span class="px-3 md:px-4 py-1.5 md:py-2 bg-red-100 text-red-700 rounded-full text-xs md:text-sm font-semibold shadow-sm flex items-center gap-1">💖 Умная</span>
-                    <span class="px-3 md:px-4 py-1.5 md:py-2 bg-purple-100 text-purple-700 rounded-full text-xs md:text-sm font-semibold shadow-sm flex items-center gap-1">✨ Незабываемая</span>
-                    <span class="px-3 md:px-4 py-1.5 md:py-2 bg-fuchsia-100 text-fuchsia-700 rounded-full text-xs md:text-sm font-semibold shadow-sm flex items-center gap-1">🦋 Единственная</span>
+                
+                <div class="flex flex-wrap justify-center gap-2 mb-4">
+                    <span class="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-xs font-medium border border-pink-100">🌟 Красивая</span>
+                    <span class="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-xs font-medium border border-pink-100">💖 Умная</span>
+                    <span class="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-xs font-medium border border-pink-100">✨ Незабываемая</span>
                 </div>
-
-                <!-- Highlight Box -->
-                <div class="w-full bg-pink-100/80 rounded-xl p-4 flex flex-col items-center border border-pink-200">
-                    <div class="text-3xl md:text-4xl mb-2">🎂</div>
-                    <p class="text-pink-800 font-bold text-base md:text-lg">Happy 19th Birthday!</p>
+                <div class="flex justify-center mb-8">
+                    <span class="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-xs font-medium border border-pink-100">🦋 Единственная</span>
+                </div>
+                
+                <div class="bg-pink-100 rounded-xl p-4 mt-4">
+                    <div class="text-3xl mb-2">🎂</div>
+                    <div class="font-bold text-pink-700">Happy 19th Birthday!</div>
                 </div>
             </div>
-
-            <div class="mt-6 md:mt-8 text-center text-pink-500 font-semibold">
-                С любовью 💕<br>
-                <div class="text-lg md:text-xl mt-2 flex gap-2 justify-center">🌸 🌺 🌻 🌷 🌹</div>
+            
+            <div class="text-center mt-6 z-10">
+                <p class="text-pink-600 mb-2">С любовью 💕</p>
+                <div class="flex justify-center gap-2 text-lg">
+                    <span>🌸</span><span>🌺</span><span>🌻</span><span>🌷</span><span>🌹</span>
+                </div>
             </div>
-        </section>
+        </div>
     </div>
-
     <script>
-        // --- 1. Background Floating Emojis ---
-        const emojis = ['🦋', '🌸', '✨', '🌻', '🌷', '💖', '🎈', '🎉', '🌺'];
-        const container = document.getElementById('emoji-container');
-        // Reduce number of emojis on smaller screens for performance
-        const isMobile = window.innerWidth < 768;
-        const numEmojis = isMobile ? 15 : 35;
-
-        for (let i = 0; i < numEmojis; i++) {
-            createEmoji();
-        }
-
-        function createEmoji() {
+        // 1. Анимация фона (эмодзи)
+        const bgEmojisContainer = document.getElementById('bg-emojis');
+        const emojis = ['🌸', '🦋', '✨', '🌻', '🌷', '💖', '⭐', '🎈'];
+        for(let i = 0; i < 25; i++) {
             const el = document.createElement('div');
             el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
             el.className = 'floating-emoji';
-            
-            // Random styling
-            const size = Math.random() * 1.5 + 0.8; // 0.8rem to 2.3rem
-            const left = Math.random() * 100; // 0% to 100%
-            const duration = Math.random() * 20 + 10; // 10s to 30s
-            const delay = Math.random() * 15; // 0s to 15s
-
-            el.style.fontSize = `${size}rem`;
-            el.style.left = `${left}vw`;
-            el.style.animationDuration = `${duration}s`;
-            el.style.animationDelay = `-${delay}s`;
-
-            container.appendChild(el);
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            el.style.animationDelay = (Math.random() * 10) + 's';
+            el.style.fontSize = (Math.random() * 1.5 + 0.8) + 'rem';
+            bgEmojisContainer.appendChild(el);
         }
-
-        // --- 2. Scroll Navigation and Dots ---
+        // 2. Логика слайдера
+        const carousel = document.getElementById('photo-carousel');
+        const slides = document.querySelectorAll('.slide');
+        const dotsContainer = document.getElementById('carousel-dots');
+        let currentSlide = 0;
+        // Создаем точки для слайдера
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all ${i === 0 ? 'bg-pink-500 scale-125' : 'bg-pink-200 hover:bg-pink-300'}`;
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        });
+        function updateDots() {
+            Array.from(dotsContainer.children).forEach((dot, i) => {
+                if (i === currentSlide) {
+                    dot.className = 'w-2 h-2 rounded-full cursor-pointer transition-all bg-pink-500 scale-125';
+                } else {
+                    dot.className = 'w-2 h-2 rounded-full cursor-pointer transition-all bg-white hover:bg-pink-200';
+                }
+            });
+        }
+        function goToSlide(index) {
+            currentSlide = index;
+            carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+            updateDots();
+        }
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            currentSlide = (currentSlide > 0) ? currentSlide - 1 : slides.length - 1;
+            goToSlide(currentSlide);
+        });
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            currentSlide = (currentSlide < slides.length - 1) ? currentSlide + 1 : 0;
+            goToSlide(currentSlide);
+        });
+        // 3. Подсветка боковых точек при скролле экранов
         const mainScroll = document.getElementById('main-scroll');
         const sections = document.querySelectorAll('.section');
-        const dots = document.querySelectorAll('.nav-dot');
-
-        mainScroll.addEventListener('scroll', () => {
-            let current = 0;
-            
-            sections.forEach((section, index) => {
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.clientHeight;
-                if (mainScroll.scrollTop >= (sectionTop - sectionHeight / 3)) {
-                    current = index;
+        const navDots = document.querySelectorAll('.nav-dot');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const index = Array.from(sections).indexOf(entry.target);
+                    navDots.forEach((dot, i) => {
+                        if (i === index) {
+                            dot.classList.replace('bg-pink-200', 'bg-pink-500');
+                            dot.classList.add('scale-125');
+                        } else {
+                            dot.classList.replace('bg-pink-500', 'bg-pink-200');
+                            dot.classList.remove('scale-125');
+                        }
+                    });
                 }
             });
-
-            dots.forEach(dot => dot.classList.remove('active'));
-            if(dots[current]) {
-                dots[current].classList.add('active');
-            }
+        }, { threshold: 0.5 });
+        sections.forEach(sec => observer.observe(sec));
+        // Клик по боковым точкам
+        navDots.forEach((dot, i) => {
+            dot.addEventListener('click', () => {
+                sections[i].scrollIntoView({ behavior: 'smooth' });
+            });
         });
-
-        window.scrollToSection = function(index) {
-            sections[index].scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- 3. Interactive Photo Slider ---
-        const slider = document.getElementById('slider');
-        const indicators = document.querySelectorAll('.indicator');
-        const slides = document.querySelectorAll('.slide');
-        let currentSlide = 0;
-        const totalSlides = 5;
-
-        window.updateSlider = function() {
-            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-            indicators.forEach((ind, index) => {
-                if (index === currentSlide) {
-                    ind.classList.remove('bg-pink-200');
-                    ind.classList.add('bg-pink-500');
-                } else {
-                    ind.classList.remove('bg-pink-500');
-                    ind.classList.add('bg-pink-200');
-                }
-            });
-        }
-
-        window.nextSlide = function(e) {
-            if(e) e.stopPropagation();
-            currentSlide = (currentSlide + 1) % totalSlides;
-            updateSlider();
-        }
-
-        window.prevSlide = function(e) {
-            if(e) e.stopPropagation();
-            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-            updateSlider();
-        }
-
-        // Загрузка фото для каждого слайда
-
-        // Поддержка свайпов на телефоне
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        slider.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-        
-        slider.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
-        
-        function handleSwipe() {
-            if (touchEndX < touchStartX - 40) window.nextSlide();
-            if (touchEndX > touchStartX + 40) window.prevSlide();
-        }
     </script>
 </body>
 </html>
